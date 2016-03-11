@@ -23,7 +23,7 @@ namespace QS{
 			view_asked_questions();
 		}
 		else if (choice == 5){
-			view_user();
+			get_user_id(); // find a user by his user_name/e-mail
 		}
 		else if (choice == 6){
 			view_followers();
@@ -45,67 +45,37 @@ namespace QS{
 		return;
 	}
 
-	
-	void User::view_user(){ 
-		string username_emai;
-		cout << "\n\n\nEnter user name/email: ";
-		cin >> username_emai;
-		int user_id = get_user_id(username_emai);
-		if (user_id == -1){
-			cout << "User doesn't exist.. Taking you back to your menu\n\n\n";
-			return;
-		}
-		view_user_information_again:
-		cout << "\n\n\nFirst name: " << _users[user_id]->first_name << " Last name: " << _users[user_id]->last_name << "\n\n";
-		cout << "about him:" << _users[user_id]->about_user << "\n\n";
+	void User::view_user(int user_id){ 
+		// information about the user
+		cout << "\n\n\nFirst name: " << first_name << " Last name: " << last_name << "\n";
+		cout << "about him:" << about_user << "\n\n";
+
+		// give option for this user
 		vector<string> options = { "view his answered questions","ask him a question",
 			"see if you are following/want to follow this user", "back" };
+
 		int choice = helper::menuOptions(options);
 		if (choice == 1){
-			_users[user_id]->view_answered_questions();
-			goto view_user_information_again;
+			view_answered_questions();
+			view_user(user_id);
 		}
 		else if (choice == 2){
 			// create a new question
-			shared_ptr<Question> new_question(new Question());
-			new_question->id = _questions.size();
-			new_question->who_asked_this_question = id;
-			new_question->who_answered_this_question = user_id;
-			new_question->_likes = 0;
-			new_question->_question = "";
-			new_question->_answer = "havn't been answered yet #";
-			// take the question form input
-			string question_word;
-			cout << "Enter you question(end it with seperated char #): ";
-			while (cin >> question_word){
-				new_question->_question = new_question->_question + " " + question_word;
-				if (question_word[0] == '#')
-					break;
-			}
-			// add the question to the questions list
+			shared_ptr<Question> new_question(new Question(user_id, id));
 			_questions.push_back(new_question);
-			// push the questoin in the user unanswered questions
-			_users[user_id]->unanswered_questions.push_back(new_question->id);
-			// push the question in your asked questions list
-			asked_questions.push_back(new_question->id);
 
-			goto view_user_information_again;
+			// push the questoin in the user unanswered questions
+			unanswered_questions.push_back(new_question->id);
+			// push the question in your asked questions list
+			_users[user_id]->asked_questions.push_back(new_question->id);
+
+			view_user(user_id);
 		}
 		else if (choice == 3){
-			if (find(following.begin(), following.end(), user_id) != following.end())
-				cout << "You're following this User\n\n\n";
-			else {
-				options = { "Follow this user","back" };
-				choice = helper::menuOptions(options);
-				if (choice == 1){
-					cout << "You're following this user now\n\n\n";
-					// add this current peroson to the perosn he is following now follwers list
-					_users[user_id]->followeres.push_back(id);
-					// add the new followed person to the current user following users
-					following.push_back(user_id);
-				}
-			}
+			add_a_follower(user_id);
+			view_user(user_id);
 		}
+		// option 4 is just return
 		return;
 	}
 
@@ -116,43 +86,32 @@ namespace QS{
 		}
 		cout << "\n\n\nQuestions you have asked\n\n\n";
 		for (auto _question_id : asked_questions){
-			auto new_question = _questions[_question_id];
-			cout << "Question has been asked by: " <<
-				_users[new_question->who_asked_this_question]->first_name << " "
-				<< _users[new_question->who_asked_this_question]->last_name
-				<< "\nQuestion has been answered by: " <<
-				_users[new_question->who_answered_this_question]->first_name << " "
-				<< _users[new_question->who_answered_this_question]->last_name
-				<< "\nQuestion:\n" << new_question->_question << "\nAnswer:\n" << new_question->_answer << "\nnumber Of likes:"
-				<< new_question->_likes << "\n";
+			// view the question
+			_questions[_question_id]->view_question();
 
-			cout << "Do you like this answer ? \n";
+			cout << "\nDo you like this answer ? \n";
 			cout << "\t1 - like this answer\n";
 			cout << "\t2 - continue\n";
 			int choice = helper::readInt(1, 2);
 			if (choice == 1)
-				new_question->_likes++;
+				_questions[_question_id]->_likes++;
 		}
-		cout << "End of all new Questions\n\n\n\n";
+		cout << "\n\nEnd of all new Questions\n\n\n\n";
 		return;
 	}
 
 	void User::view_new_questions(){
+		// if user have np new questions
 		if (new_questions.size() == 0){
 			cout << "You don't have any new answered questions now\n\n\n\n";
 			return;
 		}
+
 		cout << "\n\n\nQuestions has been answered recently\n\n\n";
 		for (auto _question_id : new_questions){
 			auto new_question = _questions[_question_id];
-			cout << "Question has been asked by: " <<
-			_users[new_question->who_asked_this_question]->first_name << " " 
-			<< _users[new_question->who_asked_this_question]->last_name
-			<< "\nQuestion has been answered by: " <<
-			_users[new_question->who_answered_this_question]->first_name << " " 
-			<< _users[new_question->who_answered_this_question]->last_name
-			<< "\nQuestion:\n" << new_question->_question << "\nAnswer:\n" << new_question->_answer << "\nnumber Of likes:"
-			<< new_question->_likes << "\n";
+			// view this question
+			new_question->view_question();
 
 			cout << "Do you like this answer ? \n";
 			cout << "\t1 - like this answer\n";
@@ -161,7 +120,10 @@ namespace QS{
 			if (choice == 1)
 				new_question->_likes++;
 		}
-		cout << "End of all new Questions\n\n\n\n";
+
+		// remove all questions from his news feed ( he already seen them )
+		new_questions.clear();
+		cout << "\n\nEnd of all new Questions\n\n\n\n";
 		return;
 	}
 
@@ -170,14 +132,11 @@ namespace QS{
 			cout << "You don't have any unanswered questions now\n\n\n\n";
 			return;
 		}
+
 		cout << "\n\n\nQuestions That you hasn't answered yet\n\n\n";
-		
 		for (int it = 0; it < (int)unanswered_questions.size(); it++){
-			auto new_question = _questions[unanswered_questions[it]];
-			cout << "Question has been asked by: " <<
-				_users[new_question->who_asked_this_question]->first_name << " "
-				<< _users[new_question->who_asked_this_question]->last_name
-				<< "\nQuestion:\n" << new_question->_question << "\n\n";
+			// view question
+			_questions[unanswered_questions[it]]->view_question();
 
 			cout << "Do you want to answer this Question now ? \n";
 			cout << "\t1 - Yes, answer this question now\n";
@@ -185,59 +144,52 @@ namespace QS{
 			cout << "Enter your choice: ";
 			int choice = helper::readInt(1, 2);
 			if (choice == 1){
-				cout << "Please Enter your answer here(end it with seperate char #):";
-				string _ans;
-				new_question->_answer = "";
-				while (cin >> _ans)
-				{
-					new_question->_answer = new_question->_answer + (new_question->_answer.size() > 0 ? " " : "") + _ans;
-					if (_ans[0] == '#')
-						break;
-				}
-				cout << "Your answer has been submitted successfully\n\n\n\n";
+				// answer this question
+				_questions[unanswered_questions[it]]->answer_question();
 
 				// put this question in his answered questions list
 				answered_questions.push_back(unanswered_questions[it]);
+
 				// put this questoin for all his followers news feed
 				for (auto _follower : followeres)
 					_users[_follower]->new_questions.push_back(unanswered_questions[it]);
+
 				// remove this question from his unanswered question list
 				unanswered_questions.erase(unanswered_questions.begin() + it);
 				it--;
 			}
 		}
-		cout << "End of all new Questions\n\n\n\n";
+		cout << "\n\nEnd of all new Questions\n\n\n\n";
 		return;
 	}
 
 	void User::view_answered_questions(){
 		if (answered_questions.size() == 0){
-			cout << "User have any answered questions now\n\n\n\n";
+			cout << "User don't have any answered questions now\n\n\n\n";
 			return;
 		}
 		cout << "\n\n\nQuestions That've been answered\n\n\n";
-		for (auto _question_id : answered_questions){
-			auto new_question = _questions[_question_id];
-			cout << "Question has been asked by: " <<
-				_users[new_question->who_asked_this_question]->first_name << " "
-				<< _users[new_question->who_asked_this_question]->last_name
-				<< "\nQuestion has been answered by: " <<
-				_users[new_question->who_answered_this_question]->first_name << " "
-				<< _users[new_question->who_answered_this_question]->last_name
-				<< "\nQuestion: " << new_question->_question << "\nAnswer:\n" << new_question->_answer << "\nnumber Of likes:"
-				<< new_question->_likes << "\n\n";
-		}
-		cout << "End of all answered Questions\n\n\n\n";
+		for (auto _question_id : answered_questions)
+			 _questions[_question_id]->view_question();
+
+		cout << "\nEnd of all answered Questions\n\n\n\n";
 		return;
 	}
 
-	int User::get_user_id(string username_email){
-		// return -1 if user doesn't exist
-		// else return user id
+	void User::get_user_id(){
+		string username_emai;
+		cout << "\n\n\nEnter user name/email: ";
+		cin >> username_emai;
+		
 		for (auto _user : _users)
-			if (_user->user_name == username_email || _user->e_mail == username_email)
-				return _user->id;
-		return -1;
+			if (_user->user_name == username_emai || _user->e_mail == username_emai){
+				// we found a user with such username/e-mail
+				_user->view_user(id);
+				return;
+			}
+		// we didn't find that user
+		cout << "User doesn't exist.. Taking you back to your menu\n\n\n";
+		return;
 	}
 
 	void User::view_followers(){
@@ -308,14 +260,13 @@ namespace QS{
 		for (auto _friend:following)
 			for (auto _friend_of_friend : _users[_friend]->following)
 				if (find(followeres.begin(), followeres.end(), _friend_of_friend) == followeres.end()){
-					// now we have found a sugeestion
 					found_atleast_one = 1;
-					// go back to here if he watchecd the user answered questions
 					view_user_information_again:
+
 					// output user information
 					cout << "First name: " << _users[_friend_of_friend]->first_name << " Last name: " <<
 						_users[_friend_of_friend]->last_name << " User name: " << _users[_friend_of_friend]->user_name << "\n";
-					// give option to view his answers or follow him
+
 					vector<string> options = { "view his answered questions", "start following this user", "continue" };
 					int choice = helper::menuOptions(options);
 					if (choice == 1){
@@ -333,6 +284,23 @@ namespace QS{
 		if (found_atleast_one == false) 
 			cout << "No suggested users are avaiable at this time\n\n\n";
 		cout << "\n\n\n";
+		return;
+	}
+
+	void User::add_a_follower(int user_id){
+		if (find(followeres.begin(), followeres.end(), user_id) != followeres.end())
+			cout << "You're following this User\n\n\n";
+		else {
+			vector<string> options = { "Follow this user", "back" };
+			int choice = helper::menuOptions(options);
+			if (choice == 1){
+				cout << "You're following this user now\n\n\n";
+				// add this current peroson to the perosn he is following now follwers list
+				_users[user_id]->following.push_back(id);
+				// add the new followed person to the current user following users
+				followeres.push_back(user_id);
+			}
+		}
 		return;
 	}
 

@@ -12,163 +12,128 @@ namespace QS{
 
 
 	void system::load_questions(){
-		ifstream inputStram("questions_data.txt");
-		if (inputStram.fail())
+		ifstream inputStream("questions_data.txt");
+		if (inputStream.fail())
 			return;
 		int numberOfQuestions;
-		inputStram >> numberOfQuestions;
+		inputStream >> numberOfQuestions;
 		while (numberOfQuestions--){
 			// create the new question
 			shared_ptr<Question> new_question(new Question());
-			new_question->_question = "";
-			new_question->_answer = "";
-			string _temp_word;
-			// read the question
-
 			
-
-			while (inputStram >> _temp_word ){
-				new_question->_question = new_question->_question + (new_question->_question.size() > 0 ?  " ":"" ) + _temp_word;
-				if (_temp_word[0] == '#')
-					break;
-			}
-
+			// read the question
+			new_question->_question = helper::read_one_sentence(inputStream);
+			
 			// read the answer
-			while (inputStram >> _temp_word){
-				new_question->_answer = new_question->_answer + (new_question->_answer.size() > 0 ?  " ":"" )+ _temp_word;
-				if (_temp_word[0] == '#')
-					break;
-
-			}
+			new_question->_answer = helper::read_one_sentence(inputStream);
 
 			// read number of likes, who_answered_this_question, who_asked_this_question
-			inputStram >> new_question->_likes >> new_question->who_answered_this_question >> new_question->who_asked_this_question;
+			inputStream >> new_question->_likes >> new_question->who_answered_this_question >> new_question->who_asked_this_question;
+
 			// identify the id of the question
 			new_question->id = _questions.size();
+
 			// add the question to the questions list
 			_questions.push_back(new_question);
 
 		}
-		inputStram.close();
+		inputStream.close();
 	}
 
+
 	void system::load_users(){
-		ifstream inputStram("users_data.txt");
-		if (inputStram.fail())
+		ifstream inputStream("users_data.txt");
+		if (inputStream.fail())
 			return;
-		int numberOfUsers, numberOfAnsweredQuestions, numberOfUnAnsweredQuestions, numberOfnewQuestions, numberOfAskedQuestions,
-			question_id, numberOfFollowers, numberOfFollowing, user_id;
-		inputStram >> numberOfUsers;
+		int numberOfUsers;
+		inputStream >> numberOfUsers;
 		while (numberOfUsers--){
+			// create a new user
 			shared_ptr<User> new_user(new User());
-			inputStram >> new_user->user_name>> new_user->first_name >> new_user->last_name >> new_user->e_mail >> new_user->password >> new_user->id;
-			new_user->about_user = "";
-			string _temp_word;
+
+			// read his data in the form: first_name, last_name, e-mail, password, id
+			inputStream >> new_user->user_name >> new_user->first_name >> new_user->last_name >> new_user->e_mail;
+			inputStream >> new_user->password >> new_user->id;
+
 			// read the information about user
-			while (inputStram >> _temp_word){
-				new_user->about_user = new_user->about_user + (new_user->about_user.size() > 0 ?  " ":"") + _temp_word;
-				if (_temp_word[0] == '#')
-					break;
-			}
+			new_user->about_user = helper::read_one_sentence(inputStream);
+
 			// read number of answered questions 
-			inputStram >> numberOfAnsweredQuestions;
-			while (numberOfAnsweredQuestions--){
-				inputStram >> question_id;
-				new_user->answered_questions.push_back(question_id);
-			}
+			helper::read_informatoin_about_user(inputStream, new_user->answered_questions);
+
 			// read number of unanswered questions 
-			inputStram >> numberOfUnAnsweredQuestions;
-			while (numberOfUnAnsweredQuestions--){
-				inputStram >> question_id;
-				new_user->unanswered_questions.push_back(question_id);
-			}
+			helper::read_informatoin_about_user(inputStream, new_user->unanswered_questions);
+
 			// read number of new questions 
-			inputStram >> numberOfnewQuestions;
-			while (numberOfnewQuestions--){
-				inputStram >> question_id;
-				new_user->new_questions.push_back(question_id);
-			}
+			helper::read_informatoin_about_user(inputStream, new_user->new_questions);
+
 			// read number of asked questions 
-			inputStram >> numberOfAskedQuestions;
-			while (numberOfAskedQuestions--){
-				inputStram >> question_id;
-				new_user->asked_questions.push_back(question_id);
-			}
+			helper::read_informatoin_about_user(inputStream, new_user->asked_questions);
+
 			// read number of followers 
-			inputStram >> numberOfFollowers;
-			while (numberOfFollowers--){
-				inputStram >> user_id;
-				new_user->followeres.push_back(user_id);
-			}
+			helper::read_informatoin_about_user(inputStream, new_user->followeres);
+
 			// read number of following 
-			inputStram >> numberOfFollowing;
-			while (numberOfFollowing--){
-				inputStram >> user_id;
-				new_user->following.push_back(user_id);
-			}
-			// identify the number of the user
+			helper::read_informatoin_about_user(inputStream, new_user->following);
+
+			// get the idea of the new user
 			new_user->id = _users.size();
 			// push the user into the users list
 			_users.push_back(new_user);
 		}
-		inputStram.close();
+		inputStream.close();
 	}
 
 
 	void system::save_questions(){
-		ofstream outputStram("questions_data.txt");
-		if (outputStram.fail())
+		ofstream outputStream("questions_data.txt");
+		if (outputStream.fail())
 			return;
-		outputStram << _questions.size() << "\n";
+		// print number of questions
+		outputStream << _questions.size() << "\n";
 		for (auto _one_question : _questions){
-			outputStram << _one_question->_question << "\n" << _one_question->_answer << "\n" << _one_question->_likes << "\n"
-				<< _one_question->who_answered_this_question << "\n" << _one_question->who_asked_this_question << "\n\n";
-
+			// print question information in the form:
+			// question, answer, numberOflikes, who_answered_this_question, who_asked_this_question
+			outputStream << _one_question->_question << "\n" << _one_question->_answer << "\n" << _one_question->_likes << "\n";
+			outputStream << _one_question->who_answered_this_question << "\n" << _one_question->who_asked_this_question << "\n\n";
 		}
-		outputStram.close();
+		outputStream.close();
 	}
 
+
 	void system::save_users(){
-		ofstream outputStram("users_data.txt");
-		if (outputStram.fail())
+		ofstream outputStream("users_data.txt");
+		if (outputStream.fail())
 			return;
-		outputStram << _users.size() << "\n";
+		outputStream << _users.size() << "\n";
 		for (auto _one_user : _users){
-			outputStram << _one_user->user_name << " " << _one_user->first_name << " " << _one_user->last_name << " "
-				<< _one_user->e_mail << " " << _one_user->password << " " << _one_user->id << "\n" << _one_user->about_user << "\n";
+			// print user information in the form:
+			// user_name, first_name, last_name, e-mail, password, id, about_user
+			outputStream << _one_user->user_name << " " << _one_user->first_name << " " << _one_user->last_name << " ";
+			outputStream << _one_user->e_mail << " " << _one_user->password << " " << _one_user->id << "\n" << _one_user->about_user << "\n";
+
 			// print number of answered questions
-			outputStram << _one_user->answered_questions.size() << "\n";
-			for (auto _one_user_question : _one_user->answered_questions)
-				outputStram << _one_user_question << " ";
-			outputStram << "\n";
+			helper::save_informatoin_about_user(outputStream, _one_user->answered_questions);
+			
 			// print number of unanswered questions
-			outputStram << _one_user->unanswered_questions.size() << "\n";
-			for (auto _one_user_question : _one_user->unanswered_questions)
-				outputStram << _one_user_question << " ";
-			outputStram << "\n";
+			helper::save_informatoin_about_user(outputStream, _one_user->unanswered_questions);
+			
 			// print number of new questions
-			outputStram << _one_user->new_questions.size() << "\n";
-			for (auto _one_user_question : _one_user->new_questions)
-				outputStram << _one_user_question << " ";
-			outputStram << "\n";
+			helper::save_informatoin_about_user(outputStream, _one_user->new_questions);
+			
 			// print number of asked questions
-			outputStram << _one_user->asked_questions.size() << "\n";
-			for (auto _one_user_question : _one_user->asked_questions)
-				outputStram << _one_user_question << " ";
+			helper::save_informatoin_about_user(outputStream, _one_user->asked_questions);
+
 			// print number of followers
-			outputStram << _one_user->followeres.size() << "\n";
-			for (auto _one_user_id : _one_user->followeres)
-				outputStram << _one_user_id << " ";
-			outputStram << "\n";
+			helper::save_informatoin_about_user(outputStream, _one_user->followeres);
+
 			// print number of following
-			outputStram << _one_user->following.size() << "\n";
-			for (auto _one_user_id : _one_user->following)
-				outputStram << _one_user_id << " ";
-			outputStram << "\n";
-			outputStram << "\n\n";
+			helper::save_informatoin_about_user(outputStream, _one_user->following);
+
+			outputStream << "\n\n";
 
 		}
-		outputStram.close();
+		outputStream.close();
 	}
 
 
@@ -193,6 +158,7 @@ namespace QS{
 		return;
 	}
 
+
 	void system::login(){
 		int _id;
 		string _pass;
@@ -211,6 +177,7 @@ namespace QS{
 		return;
 	}
 		
+
 	void system::Sign_up(){
 		shared_ptr<User> new_user(new User());
 		cout << "\n\n\nPlease enter your user name: ";
@@ -230,15 +197,9 @@ namespace QS{
 			}
 
 		// add information about user
-		new_user->about_user = "";
-		string _about_user = "";
 		cout << "Please enter information about yourself(end it with separated char #): ";
-		while (cin >> _about_user){
-			new_user->about_user = new_user->about_user + " " + _about_user;
-			if (_about_user[0] == '#')
-				break;
-		}
-
+		new_user->about_user = helper::read_one_sentence(cin);
+		
 		cout << "Please enter your password: ";
 		cin >> new_user->password;
 		new_user->id = (int)_users.size();
@@ -247,7 +208,6 @@ namespace QS{
 		_users.push_back(new_user);
 		return;
 	}
-
 
 
 }

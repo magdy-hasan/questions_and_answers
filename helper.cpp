@@ -26,4 +26,36 @@ namespace QS{
 		cout << "You've enterd out of range number... Please try again\n\n";
 		return readInt(min_option,max_option);
 	}
+
+	void helper::read_informatoin_about_user(ifstream &inputStream, vector<int> &data_to_read){
+		int numberOfdata;
+		int temp_data;
+		inputStream >> numberOfdata;
+		while (numberOfdata--){
+			inputStream >> temp_data;
+			data_to_read.push_back(temp_data);
+		}
+		return;
+	}
+
+	void helper::save_informatoin_about_user(ofstream &outputStream, vector<int> &data_to_save){
+		outputStream << data_to_save.size() << "\n";
+		for (auto _data : data_to_save){
+			outputStream << _data << " ";
+		}
+		outputStream << "\n";
+		return;
+	}
+
+	string helper::read_one_sentence(istream &inputStream){
+		string sentence = "";
+		string temp_word = "";
+		while (inputStream >> temp_word){
+			sentence = sentence + (sentence.size() > 0 ? " " : "") + temp_word;
+			if (temp_word[0] == '#')
+				break;
+		}
+		return sentence;
+	}
+
 }
