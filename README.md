@@ -8,7 +8,6 @@
 
 
 
-######Testing: https://www.youtube.com/watch?v=eja-WC3b3rU
 
 This a questions and answers system ( kind of like ask.fm idea ) with c++ 
 
